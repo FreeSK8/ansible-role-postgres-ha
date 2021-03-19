@@ -17,11 +17,19 @@
 
 - name: copy PAF rpm to hosts
   copy: src="{{ paf_pkg }}" dest="/tmp/{{ paf_pkg }}"
+  when: os_version != 'ubuntu20'
 
 - name: install PAF DB failover agent
   yum:
     name: "/tmp/{{ paf_pkg }}"
     state: present
+  when: os_version != 'ubuntu20'
+
+- name: install PAF ubuntu
+  apt:
+    name: resource-agents-paf
+    state: present
+  when: os_version == 'ubuntu20'
 
 - name: apply PAF v2.2.0 fix for newest pacemaker
   copy:
@@ -59,7 +67,6 @@
   pcs_resource:
     name: "{{ postgres_ha_cluster_pg_HA_res_name }}"    # master resource name
     child_name: "{{ postgres_ha_cluster_pg_res_name }}" #  slave resource name
-    resource_class: 'master'
     resource_type: ocf:heartbeat:pgsqlms
     #force_resource_update: true
     options: >
@@ -68,12 +75,6 @@
       pgdata="{{ postgres_ha_pg_data }}"
       pgport="{{ postgres_ha_pg_port }}"
       recovery_template="{{ postgres_ha_pg_data }}/../recovery.conf.{{postgres_ha_cluster_name}}.pcmk"
-      master
-      master-max=1
-      master-node-max=1
-      clone-max="{{ ansible_play_batch|length }}"
-      clone-node-max=1
-      notify=true
       op start timeout=60s
       op stop timeout=60s
       op promote timeout=30s
@@ -81,4 +82,3 @@
       op notify timeout=60s
       op monitor interval="{{ postgres_ha_monitor_interval_pgmaster }}" timeout=10s role="Master"
       op monitor interval="{{ postgres_ha_monitor_interval_pgslave }}"  timeout=10s role="Slave"
-

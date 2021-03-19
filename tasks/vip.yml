@@ -1,13 +1,33 @@
 # vim: set filetype=yaml expandtab tabstop=2 shiftwidth=2 softtabstop=2 background=dark :
 
+- name: install vip scripts
+  ansible.builtin.template:
+    src: usr/local/bin/assign-ip
+    dest: /usr/local/bin/assign-ip
+    owner: root
+    mode: '0755'
+
+- name: Make sure destination dir exists
+  file:
+    path: /usr/lib/ocf/resource.d/digitalocean
+    state: directory
+    recurse: yes
+
+- name: install vip handler
+  ansible.builtin.template:
+    src: usr/lib/ocf/resource.d/digitalocean/floatip
+    dest: /usr/lib/ocf/resource.d/digitalocean/floatip
+    owner: root
+    mode: '0755'
+
 - name: create virtual IP resource
   when: inventory_hostname == postgres_ha_cluster_master_host   # run only on one node
   pcs_resource:
     name: "{{ postgres_ha_cluster_vip_res_name }}"
-    resource_type: ocf:heartbeat:IPaddr2
+    resource_type: ocf:digitalocean:floatip
     options: >
-      ip="{{ postgres_ha_cluster_vip }}"
-      cidr_netmask="{{ postgres_ha_cluster_vip_mask }}"
+      do_token="{{ do_token }}"
+      floating_ip="{{ postgres_ha_cluster_vip }}"
       op monitor interval=10s
 
 

@@ -2,8 +2,8 @@
 # cluster config
 postgres_ha_cluster_master_host: "{{ ansible_play_batch[0] }}"     # sync all DB slaves from this master node (set to first node if not defined)
 postgres_ha_cluster_name: 'pgcluster'                      # name of the pcs cluster
-postgres_ha_cluster_vip:  10.20.30.40                      # floating IP that will be used to connect to clustered DB (always follows the master)
-postgres_ha_cluster_vip_mask: 24                           # floating IP netmask
+postgres_ha_cluster_vip:  174.138.110.252                      # floating IP that will be used to connect to clustered DB (always follows the master)
+postgres_ha_cluster_vip_mask: 32                           # floating IP netmask
 postgres_ha_cluster_vip_res_name:  'pg-vip'                # resource name of the floating IP
 postgres_ha_cluster_pg_res_name: 'postgres'                # slave DB cluster resource name
 postgres_ha_cluster_pg_HA_res_name: 'postgres-ha'          # master DB cluster resource name (this name is used to manage postgres resource)
@@ -14,7 +14,7 @@ postgres_ha_monitor_interval_pgslave: '16s'                # frequency of checki
 
 # auth config
 postgres_ha_pg_repl_user: replicator                       # database user used for replication
-postgres_ha_pg_repl_pass: rybKath3KeckGov1
+postgres_ha_pg_repl_pass: wfe2ozf340K
 postgres_ha_cluster_ha_password: 'w9N5s$qX@$VK'        # password for joining the pcs cluster
 postgres_ha_cluster_ha_password_hash: '$6$SwyCHZqnHozkwt4h$PS7DldBgppPy5iPdos.CP8Vfw4kB4Q6t0pkysaNbcwbVoRtHriW9Ocxx3k5956QT.V92EB0oXvPEy3sxUAV1N1'  # fropFav7epAbOch2
 
@@ -22,9 +22,10 @@ postgres_ha_cluster_ha_password_hash: '$6$SwyCHZqnHozkwt4h$PS7DldBgppPy5iPdos.CP
 postgres_ha_pg_version: 12
 postgres_ha_import_repo: true                               # Enable download of postgresql repo before install
 postgres_ha_repo_url: 'http://mirrors.digitalocean.com/ubuntu/pool/main/p/postgresql-{{ postgres_ha_pg_version }}/{{ pg_pkg_name }}'
-postgres_ha_pg_systemd_svcname: "postgresql-{{ postgres_ha_pg_version }}"   # the name of the original posgres DB resource in systemd
+postgres_ha_pg_systemd_svcname: "postgresql"   # the name of the original posgres DB resource in systemd
 postgres_ha_pg_data: "/var/lib/postgresql/{{ postgres_ha_pg_version }}/main"     # where can I find PG datadir?
 postgres_ha_pg_bindir: "/usr/lib/postgresql/{{ postgres_ha_pg_version }}/bin"        # where are the PG binaries?
+postgres_ha_pg_etc: "/etc/postgresql/{{ postgres_ha_pg_version }}/main"
 
 postgres_ha_postgresql_conf_vars:                          # When altering this variable, please copy all postgresql.conf items specified here \
     listen_addresses: "'*'"                                     # because this whole variable will be overloaded by your new definition. \
@@ -37,7 +38,7 @@ postgres_ha_postgresql_conf_vars:                          # When altering this 
 postgres_ha_maint_scripts_path: /var/lib/pgsql/pg-maint    # location where to create user scripts for database administration
 
 # PAF vars
-postgres_ha_paf_version: 2.2.1
+postgres_ha_paf_version: 2.2.0
 postgres_ha_paf_geo_patch: False                           # Apply a patch to PAF to better handle network splits in geographically split clusters.
                                                                 # This patch is from creator of this ansible role and is not official.
                                                                 # It allows having a postgresql master-slave cluster without the need of fencing configured

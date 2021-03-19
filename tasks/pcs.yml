@@ -5,7 +5,6 @@
 
 - name: install cluster pkgs
   apt:
-    update_cache: true
     name: pcs
     state: present
   when: ansible_distribution == 'Ubuntu'
@@ -51,8 +50,7 @@
   lineinfile: dest=/etc/sysconfig/pcsd regexp='^PCSD_DISABLE_GUI=' line="PCSD_DISABLE_GUI={% if postgres_ha_gui_enable %}false{% else %}true{% endif %}" state=present
   when: ansible_distribution != 'Ubuntu'
 
-- name: service pcsd start                         
-  service: name=pcsd state=started enabled=yes
+# WAS HIERE
 
 - name: setup hacluster password
   user:
@@ -65,6 +63,12 @@
 #  shell: pcs cluster node add {{ item }} addr={{ hostvars[item].ansible_default_ipv4.address }}
 #  with_items: "{{ ansible_play_batch }}"
 
+- name: remove default cluster from nodes
+  shell: cp /etc/corosync/corosync.conf /etc/corosync/corosync.conf.old && pcs cluster destroy
+  when: os_version=="ubuntu20"
+  args:
+    creates: /etc/corosync/corosync.conf.old
+
 - name: setup cluster auth
   shell: pcs host auth -u hacluster -p "{{ postgres_ha_cluster_ha_password }}" {{ ansible_play_batch | join( " ") }}
 
@@ -73,11 +77,14 @@
 # 2. join other cluster nodes (the task below)
 # The reason is that we want to support adding new nodes by re-running the role.
 - name: create cluster (centos7/Ubuntu)
-  shell: mv /etc/corosync/corosync.conf /etc/corosync/corosync.conf.old && pcs cluster setup {{ postgres_ha_cluster_name }} "{{ pcs_hostname }}" {% if postgres_ha_pcs_advanced_params %}{% for param in postgres_ha_pcs_advanced_params|difference(['addr0', 'addr1', 'addr2', 'addr3', 'transport']) %}--{{ param }} {{ postgres_ha_pcs_advanced_params[param] }} {% endfor %}{% endif %} {% if postgres_ha_mcast_enable %}--transport udp {{ pcs_ring_addrs }}{% endif %} --force
+  shell: pcs cluster setup {{ postgres_ha_cluster_name }} {{ pcs_hostname }} {% if postgres_ha_pcs_advanced_params %}{% for param in postgres_ha_pcs_advanced_params|difference(['addr0', 'addr1', 'addr2', 'addr3', 'transport']) %}--{{ param }} {{ postgres_ha_pcs_advanced_params[param] }} {% endfor %}{% endif %} {% if postgres_ha_mcast_enable %}--transport udp {{ pcs_ring_addrs }}{% endif %} --force && touch /etc/corosync/corosync_master_touch
   args:
-    creates: /etc/corosync/corosync.conf.old
-  when: (os_version == 'centos7' or os_version=="ubuntu20") and
-        inventory_hostname == postgres_ha_cluster_master_host   # run only on master node
+    creates: /etc/corosync/corosync_master_touch
+  when: (os_version == 'centos7' or os_version=="ubuntu20") and inventory_hostname == postgres_ha_cluster_master_host   # run only on master node
+
+#- name: service pcsd start
+#  service: name=pcsd state=started enabled=yes
+#  when: inventory_hostname == postgres_ha_cluster_master_host
 
 # ignore these parameters from postgres_ha_pcs_advanced_params: 'addr0', 'addr1', 'addr2', 'addr3', 'transport'
 - name: create cluster (centos6)
@@ -86,13 +93,6 @@
     creates: /etc/cluster/cluster.conf
   when: os_version == 'centos6' and
         inventory_hostname == postgres_ha_cluster_master_host    # run only on master node
-
-- name: remove cluster conf from other nodes
-  shell: mv /etc/corosync/corosync.conf /etc/corosync/corosync.conf.old && pcs cluster destroy
-  when: os_version=="ubuntu20" and
-        inventory_hostname != postgres_ha_cluster_master_host
-  args:
-    creates: /etc/corosync/corosync.conf.old
 
 - name: join cluster nodes (centos7/Ubuntu)
   shell: /bin/sh -c "if ! grep -q 'ring0_addr[:] *{{ item }}[\t ]*$' /etc/corosync/corosync.conf; then pcs cluster node add {{ hostvars[item]['pcs_hostname'] }} --force; fi" && touch /etc/corosync/added_{{item}}
@@ -130,9 +130,10 @@
   pcs_property: name=symmetric-cluster value=false
   run_once: true
 
-- name: alter cluster transition settings
-  pcs_property: name=crmd-transition-delay value=3s
-  run_once: true
+# property doesn't exist in ubuntu20's pacemaker exec
+#- name: alter cluster transition settings
+#  pcs_property: name=crmd-transition-delay value=3s
+#  run_once: true
 
 - name: verify cluster configuration
   shell: crm_verify -L -V
