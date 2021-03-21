@@ -38,8 +38,8 @@ postgres_ha_postgresql_conf_vars:                          # When altering this 
 postgres_ha_maint_scripts_path: /var/lib/pgsql/pg-maint    # location where to create user scripts for database administration
 
 # PAF vars
-postgres_ha_paf_version: 2.2.0
-postgres_ha_paf_geo_patch: False                           # Apply a patch to PAF to better handle network splits in geographically split clusters.
+postgres_ha_paf_version: 2.3.0
+postgres_ha_paf_geo_patch: false                           # Apply a patch to PAF to better handle network splits in geographically split clusters.
                                                                 # This patch is from creator of this ansible role and is not official.
                                                                 # It allows having a postgresql master-slave cluster without the need of fencing configured
                                                                 # (which is hard to have in geographically split clusters).

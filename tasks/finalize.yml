@@ -4,12 +4,13 @@
   shell: pcs resource enable "{{ postgres_ha_cluster_pg_HA_res_name }}" 
   when: inventory_hostname == postgres_ha_cluster_master_host    # run only on one node
 
+#- name: enable database cluster resource
+#  shell: pcs resource manage "{{ postgres_ha_cluster_pg_HA_res_name }}"
+#  when: inventory_hostname == postgres_ha_cluster_master_host    # run only on one node
+
 - name: refresh database cluster resource
   shell: pcs resource manage "{{ postgres_ha_cluster_pg_HA_res_name }}" && pcs resource clear "{{ postgres_ha_cluster_pg_HA_res_name }}" && pcs resource refresh "{{ postgres_ha_cluster_pg_HA_res_name }}"
   when: inventory_hostname == postgres_ha_cluster_master_host    # run only on one node
-
-- name: restart database services
-  service: name="{{ postgres_ha_pg_systemd_svcname }}" state=started enabled=yes
 
 - name: check if all slaves are connected
   shell: psql -Aqtc "SELECT count(*) FROM pg_stat_replication"

@@ -14,7 +14,7 @@
 
 - name: append servers IP list
   set_fact: 
-    all_ips: "{% if all_ips != '' %}{{ all_ips }} {% endif %}{{ hostvars[item].ansible_default_ipv4.address }}"
+    all_ips: "{% if all_ips != '' %}{{ all_ips }} {% endif %}{{ hostvars[item].ansible_eth1.ipv4.address }}"
   with_items: "{{ ansible_play_batch }}"
 
 - name: generate cluster maintenance scripts

@@ -5,6 +5,7 @@
 
 - name: install cluster pkgs
   apt:
+    update_cache: true
     name: pcs
     state: present
   when: ansible_distribution == 'Ubuntu'
@@ -18,10 +19,10 @@
     - pacemaker
     - libselinux-python
 
-- name: "Build hosts file"
-  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}" state=present
-  when: hostvars[item].ansible_default_ipv4.address is defined
-  with_items: "{{ ansible_play_batch }}"
+#- name: "Build hosts file"
+#  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}" state=present
+#  when: hostvars[item].ansible_default_ipv4.address is defined
+#  with_items: "{{ ansible_play_batch }}"
 
 # For each host add hostnames for all postgres_ha_network_rings interfaces to /etc/hosts
 # example output: "10.10.90.200 myhost-ring1"
