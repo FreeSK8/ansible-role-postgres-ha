@@ -139,7 +139,7 @@ echo Altering pg_hba.conf to forbid self-replication
 # permit all hosts first
 sed -ri'' -e 's,^(host    replication .*({{ all_ips.split(" ") | join("|") }})/32 *)(reject|md5),\1md5,g' "${PGDATA}/pg_hba.conf"
 # deny myself
-sed -ri'' -e 's,^(host    replication .*({{ hostvars[inventory_hostname].ansible_eth1.ipv4.address }})/32 *)md5,\1reject,g' "${PGDATA}/pg_hba.conf"
+sed -ri'' -e 's,^(host    replication .*({{ inventory_hostname }})/32 *)md5,\1reject,g' "${PGDATA}/pg_hba.conf"
 
 cat << EOF
 Slave database cloned successfully.
