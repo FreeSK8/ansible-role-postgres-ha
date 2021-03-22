@@ -41,17 +41,6 @@
     mode:  0555
   when: postgres_ha_paf_version == '2.3.0'
 
-#- name: apply PAF v2.2.0 fix for newest pacemaker
-#  copy:
-#    src: 'pgsqlms-2.2.0-fix-pg10'
-#    dest: '/usr/lib/ocf/resource.d/heartbeat/pgsqlms'
-#  args:
-#    owner: root
-#    group: root
-#    mode:  0555
-#  when: postgres_ha_paf_version == '2.2.0' and
-#        not postgres_ha_paf_geo_patch
-
 - name: apply geo-HA patches to DB failover agent
   copy:
     src: 'pgsqlms-{{ postgres_ha_paf_version }}-geo-patched'
