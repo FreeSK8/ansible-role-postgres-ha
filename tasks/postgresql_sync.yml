@@ -103,9 +103,9 @@
 
 - name: alter DB ACL in pg_hba.conf
   lineinfile: dest="{{ postgres_ha_pg_etc }}/pg_hba.conf"
-    regexp='^host    postgres .*{{ hostvars[item].ansible_eth1.ipv4.address }}/32'
+    regexp='^host    postgres .*{{ hostvars[item].ansible_default_ipv4.address }}/32'
     insertbefore='^host'
-    line='host    postgres       {{ postgres_ha_pg_repl_user }}    {{ hostvars[item].ansible_eth1.ipv4.address }}/32          md5'
+    line='host    postgres       {{ postgres_ha_pg_repl_user }}    {{ hostvars[item].ansible_default_ipv4.address }}/32          md5'
   with_items: "{{ ansible_play_batch }}"
   when: inventory_hostname == postgres_ha_cluster_master_host or
         db_prevsync_file.stat.exists
@@ -114,9 +114,9 @@
 
 - name: alter DB replication ACL in pg_hba.conf on master
   lineinfile: dest="{{ postgres_ha_pg_etc }}/pg_hba.conf"
-    regexp='^host    replication .*{{ hostvars[item].ansible_eth1.ipv4.address }}/32'
+    regexp='^host    replication .*{{ hostvars[item].ansible_default_ipv4.address }}/32'
     insertbefore='^host'
-    line='host    replication     {{ postgres_ha_pg_repl_user }}    {{ hostvars[item].ansible_eth1.ipv4.address }}/32          {% if item == inventory_hostname %}reject{% else %}md5{% endif %}'
+    line='host    replication     {{ postgres_ha_pg_repl_user }}    {{ hostvars[item].ansible_default_ipv4.address }}/32          {% if item == inventory_hostname %}reject{% else %}md5{% endif %}'
   with_items: "{{ ansible_play_batch }}"
   when: inventory_hostname == postgres_ha_cluster_master_host or
         db_prevsync_file.stat.exists
@@ -141,7 +141,7 @@
     create: yes
 
 - name: setup .pgpass replication auth for other IPs
-  lineinfile: dest="~postgres/.pgpass" line="{{ hostvars[item].ansible_eth1.ipv4.address }}:{{ postgres_ha_pg_port }}:replication:{{ postgres_ha_pg_repl_user }}:{{ postgres_ha_pg_repl_pass }}" state=present
+  lineinfile: dest="~postgres/.pgpass" line="{{ hostvars[item].ansible_default_ipv4.address }}:{{ postgres_ha_pg_port }}:replication:{{ postgres_ha_pg_repl_user }}:{{ postgres_ha_pg_repl_pass }}" state=present
   with_items: "{{ansible_play_batch}}"
   args:
     owner: postgres
@@ -248,7 +248,7 @@
 # replicate slave node (assumes firewall is already setup)
 # run only on slave nodes and only when postgres datadir is empty
 - name: synchronize slave databases
-  shell: '{{ postgres_ha_pg_bindir }}/pg_basebackup -h "{{ hostvars[postgres_ha_cluster_master_host].ansible_eth1.ipv4.address }}" -p {{ postgres_ha_pg_port }} -R -D "{{ postgres_ha_pg_data }}" -U "{{ postgres_ha_pg_repl_user }}" -v -P -X stream'
+  shell: '{{ postgres_ha_pg_bindir }}/pg_basebackup -h "{{ hostvars[postgres_ha_cluster_master_host].ansible_default_ipv4.address }}" -p {{ postgres_ha_pg_port }} -R -D "{{ postgres_ha_pg_data }}" -U "{{ postgres_ha_pg_repl_user }}" -v -P -X stream'
   become: yes
   become_user: postgres
   vars:
@@ -260,9 +260,9 @@
 
 - name: forbid self-replication in pg_hba.conf on slaves
   lineinfile: dest="{{ postgres_ha_pg_etc }}/pg_hba.conf"
-    regexp='^host    replication .*{{ hostvars[item].ansible_eth1.ipv4.address }}/32'
+    regexp='^host    replication .*{{ hostvars[item].ansible_default_ipv4.address }}/32'
     insertbefore='^host'
-    line='host    replication     {{ postgres_ha_pg_repl_user }}    {{ hostvars[item].ansible_eth1.ipv4.address }}/32          {% if item == inventory_hostname %}reject{% else %}md5{% endif %}'
+    line='host    replication     {{ postgres_ha_pg_repl_user }}    {{ hostvars[item].ansible_default_ipv4.address }}/32          {% if item == inventory_hostname %}reject{% else %}md5{% endif %}'
   with_items: "{{ ansible_play_batch }}"
   # run only on freshly synchronized slave
   when: inventory_hostname != postgres_ha_cluster_master_host and slave_resync.changed

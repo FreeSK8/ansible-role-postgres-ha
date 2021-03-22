@@ -41,16 +41,16 @@
     mode:  0555
   when: postgres_ha_paf_version == '2.3.0'
 
-- name: apply PAF v2.2.0 fix for newest pacemaker
-  copy:
-    src: 'pgsqlms-2.2.0-fix-pg10'
-    dest: '/usr/lib/ocf/resource.d/heartbeat/pgsqlms'
-  args:
-    owner: root
-    group: root
-    mode:  0555
-  when: postgres_ha_paf_version == '2.2.0' and
-        not postgres_ha_paf_geo_patch
+#- name: apply PAF v2.2.0 fix for newest pacemaker
+#  copy:
+#    src: 'pgsqlms-2.2.0-fix-pg10'
+#    dest: '/usr/lib/ocf/resource.d/heartbeat/pgsqlms'
+#  args:
+#    owner: root
+#    group: root
+#    mode:  0555
+#  when: postgres_ha_paf_version == '2.2.0' and
+#        not postgres_ha_paf_geo_patch
 
 - name: apply geo-HA patches to DB failover agent
   copy:
@@ -71,13 +71,20 @@
   when: postgres_ha_pg_version < 12
 
 - name: prepare DB recovery config for 12+
-  lineinfile: dest=/etc/postgresql/12/main/postgresql.conf regexp='^primary_conninfo =' line="primary_conninfo = 'port={{ postgres_ha_pg_port }} host={{ postgres_ha_cluster_vip }} application_name=\\'{{ inventory_hostname }}\\' user={{ postgres_ha_pg_repl_user }} '" state=present
+  lineinfile: dest=/etc/postgresql/12/main/postgresql.conf regexp='^primary_conninfo =' line="primary_conninfo = 'port={{ postgres_ha_pg_port }} host={{ postgres_ha_cluster_vip }} application_name={{ inventory_hostname }} user={{ postgres_ha_pg_repl_user }} '" state=present
+  when: postgres_ha_pg_version >= 12
 
 - name: prepare DB recovery config for 12+
   lineinfile: dest=/etc/postgresql/12/main/postgresql.conf regexp='^recovery_target_timeline =' line="recovery_target_timeline = 'latest'" state=present
+  when: postgres_ha_pg_version >= 12
 
 - name: stop database for clustering
   service: name="{{ postgres_ha_pg_systemd_svcname }}" state=stopped enabled=false
+
+- name: remove default PGSQL generated auto.conf that came with the apt install earlier
+  file:
+    path: /var/lib/postgresql/12/main/postgresql.auto.conf
+    state: absent
 
 - name: create database cluster resource
   when: inventory_hostname == postgres_ha_cluster_master_host    # run only on one node
@@ -102,4 +109,4 @@
       op monitor interval="{{ postgres_ha_monitor_interval_pgmaster }}" timeout=10s role="Master"
       op monitor interval="{{ postgres_ha_monitor_interval_pgslave }}"  timeout=10s role="Slave"
       meta notify=true master-max=1 master-node-max=1 clone-max="{{ ansible_play_batch|length }}" clone-node-max=1
-      promotable
+      promotable notify=true

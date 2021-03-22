@@ -19,10 +19,10 @@
     - pacemaker
     - libselinux-python
 
-#- name: "Build hosts file"
-#  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}" state=present
-#  when: hostvars[item].ansible_default_ipv4.address is defined
-#  with_items: "{{ ansible_play_batch }}"
+- name: "Build hosts file"
+  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}" state=present
+  when: hostvars[item].ansible_default_ipv4.address is defined
+  with_items: "{{ ansible_play_batch }}"
 
 # For each host add hostnames for all postgres_ha_network_rings interfaces to /etc/hosts
 # example output: "10.10.90.200 myhost-ring1"
@@ -51,7 +51,9 @@
   lineinfile: dest=/etc/sysconfig/pcsd regexp='^PCSD_DISABLE_GUI=' line="PCSD_DISABLE_GUI={% if postgres_ha_gui_enable %}false{% else %}true{% endif %}" state=present
   when: ansible_distribution != 'Ubuntu'
 
-# WAS HIERE
+- name: service pcsd start
+  service: name=pcsd state=started enabled=yes
+  when: inventory_hostname == postgres_ha_cluster_master_host
 
 - name: setup hacluster password
   user:
@@ -82,10 +84,6 @@
   args:
     creates: /etc/corosync/corosync_master_touch
   when: (os_version == 'centos7' or os_version=="ubuntu20") and inventory_hostname == postgres_ha_cluster_master_host   # run only on master node
-
-#- name: service pcsd start
-#  service: name=pcsd state=started enabled=yes
-#  when: inventory_hostname == postgres_ha_cluster_master_host
 
 # ignore these parameters from postgres_ha_pcs_advanced_params: 'addr0', 'addr1', 'addr2', 'addr3', 'transport'
 - name: create cluster (centos6)
