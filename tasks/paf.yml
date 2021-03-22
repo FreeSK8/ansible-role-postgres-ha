@@ -60,7 +60,7 @@
   when: postgres_ha_pg_version < 12
 
 - name: prepare DB recovery config for 12+
-  lineinfile: dest=/etc/postgresql/12/main/postgresql.conf regexp='^primary_conninfo =' line="primary_conninfo = 'port={{ postgres_ha_pg_port }} host={{ postgres_ha_cluster_vip }} application_name={{ inventory_hostname }} user={{ postgres_ha_pg_repl_user }} '" state=present
+  lineinfile: dest=/etc/postgresql/12/main/postgresql.conf regexp='^primary_conninfo =' line="primary_conninfo = 'application_name={{ inventory_hostname }} user={{ postgres_ha_pg_repl_user }} '" state=present
   when: postgres_ha_pg_version >= 12
 
 - name: prepare DB recovery config for 12+

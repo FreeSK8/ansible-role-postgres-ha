@@ -19,10 +19,14 @@
     - pacemaker
     - libselinux-python
 
-- name: "Build hosts file"
-  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_eth1.ipv4.address }} {{ item }}" state=present
-  when: hostvars[item].ansible_eth1.ipv4.address is defined
-  with_items: "{{ ansible_play_batch }}"
+#- name: "Build hosts file"
+#  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_eth1.ipv4.address }} {{ item }}" state=present
+#  when: hostvars[item].ansible_eth1.ipv4.address is defined
+#  with_items: "{{ ansible_play_batch }}"
+
+#- name: "Add master mapping to hosts file"
+#  lineinfile: dest=/etc/hosts regexp='.*{{ postgres_ha_cluster_master_hostname }}$' line="{{ hostvars[postgres_ha_cluster_master_host].ansible_eth1.ipv4.address }} {{ postgres_ha_cluster_master_hostname }}" state=present
+#  when: postgres_ha_cluster_master_hostname is defined
 
 # For each host add hostnames for all postgres_ha_network_rings interfaces to /etc/hosts
 # example output: "10.10.90.200 myhost-ring1"
